@@ -1,0 +1,46 @@
+pipeline {
+    agent any
+
+    stages {
+
+        stage('Checkout Code') {
+            steps {
+                echo 'Checking out repository...'
+                checkout scm
+            }
+        }
+
+        stage('Clean Old Containers') {
+            steps {
+                echo 'Removing old Docker containers...'
+                bat '''
+                docker stop fresh-app || exit 0
+                docker rm fresh-app || exit 0
+                '''
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                echo 'Building new Docker image...'
+                bat 'docker build -t fresh-app .'
+            }
+        }
+
+        stage('Run Docker Container') {
+            steps {
+                echo 'Starting container...'
+                bat 'docker run -d -p 3000:3000 --name fresh-app fresh-app'
+            }
+        }
+    }
+
+    post {
+        success {
+            echo '🎉 Pipeline completed successfully!'
+        }
+        failure {
+            echo '❌ Pipeline failed — check logs!'
+        }
+    }
+}
